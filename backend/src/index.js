@@ -2,7 +2,7 @@ import express from 'express'
 import http from 'http'
 import connectDB from './config/db.js'
 import setupSocket from './config/socket.js'
-import authRouters from './routes/auth.js'
+import userRouters from './routes/user.js'
 import messageRouters from './routes/message.js'
 
 const app = express()
@@ -18,7 +18,7 @@ setupSocket(server)
 
 // Setup routes
 app.use('/messages', messageRouters)
-app.use('/auth', authRouters)
+app.use('/user', userRouters)
 
 // Start server
 const PORT = process.env.PORT || 3000
