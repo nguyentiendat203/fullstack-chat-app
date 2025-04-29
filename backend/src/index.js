@@ -1,41 +1,24 @@
 import express from 'express'
-import mongoose from 'mongoose'
 import http from 'http'
-import { Server } from 'socket.io'
-import authRoutes from './routes/auth.js'
-import messageRoutes from './routes/message.js'
-import dotenv from 'dotenv'
+import connectDB from './config/db.js'
+import setupSocket from './config/socket.js'
+import authRouters from './routes/auth.js'
+import messageRouters from './routes/message.js'
 
-dotenv.config()
 const app = express()
 const server = http.createServer(app)
-const io = new Server(server)
 
 // Middleware
 app.use(express.json())
+// Connect to MongoDB
+connectDB()
 
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err))
+// Setup Socket.IO
+setupSocket(server)
 
-// Routes
-app.use('/auth', authRoutes)
-app.use('/message', messageRoutes)
-
-// Socket.IO connection
-io.on('connection', (socket) => {
-  console.log('A user connected')
-
-  socket.on('sendMessage', (message) => {
-    io.emit('receiveMessage', message)
-  })
-
-  socket.on('disconnect', () => {
-    console.log('A user disconnected')
-  })
-})
+// Setup routes
+app.use('/messages', messageRouters)
+app.use('/auth', authRouters)
 
 // Start server
 const PORT = process.env.PORT || 3000
