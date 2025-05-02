@@ -4,13 +4,21 @@ import connectDB from './config/db.js'
 import setupSocket from './config/socket.js'
 import userRouters from './routes/user.js'
 import messageRouters from './routes/message.js'
+import cors from 'cors'
+import cookieParser from 'cookie-parser'
 
 const app = express()
 const server = http.createServer(app)
 
 // Middleware
 app.use(express.json())
-// Connect to MongoDB
+app.use(cookieParser())
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+  })
+)
 connectDB()
 
 // Setup Socket.IO

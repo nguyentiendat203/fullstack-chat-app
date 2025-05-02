@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 
-const generateToken = (userId, res) => {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
+const generateToken = (user, res) => {
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
   // Store refresh token in cookies
   res.cookie('jwt', token, {
@@ -11,7 +11,10 @@ const generateToken = (userId, res) => {
     secure: process.env.BUILD_MODE !== 'development'
   })
 
-  return token
+  res.status(200).json({
+    _id: user._id,
+    fullName: user.fullName
+  })
 }
 
 export default generateToken

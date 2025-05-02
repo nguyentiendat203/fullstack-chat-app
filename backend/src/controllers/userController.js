@@ -57,12 +57,7 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' })
     }
 
-    generateToken(user._id, res)
-
-    res.status(200).json({
-      _id: user._id,
-      fullName: user.fullName
-    })
+    generateToken(user, res)
   } catch (error) {
     console.log('Error in login controller', error.message)
     res.status(500).json({ message: 'Internal Server Error' })
