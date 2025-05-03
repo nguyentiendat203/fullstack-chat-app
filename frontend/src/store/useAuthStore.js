@@ -7,6 +7,7 @@ const useAuthStore = create((set) => ({
   isLoggingIn: false,
   isUpdatingProfile: false,
   authUser: null,
+  onlineUsers: [],
 
   selectedUser: null,
   setSelectedUser: (user) => set({ selectedUser: user }),
