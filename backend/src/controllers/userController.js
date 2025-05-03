@@ -49,12 +49,12 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email })
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' })
+      return res.status(400).json({ message: 'Email do not exist' })
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password)
     if (!isPasswordCorrect) {
-      return res.status(400).json({ message: 'Invalid credentials' })
+      return res.status(400).json({ message: 'Password incorrect' })
     }
 
     generateToken(user, res)
@@ -86,10 +86,20 @@ export const checkAuth = (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { profilePic } = req.body
+
     const userId = req.user._id
 
     if (!profilePic) {
       return res.status(400).json({ message: 'Profile pic is required' })
+    }
+
+    // Check image size (assuming base64 string)
+    const imageSizeInBytes = Buffer.from(profilePic.split(',')[1], 'base64').length
+    console.log('Image size in bytes:', imageSizeInBytes)
+    const maxSizeInBytes = 2 * 1024 * 1024 // 2MB
+
+    if (imageSizeInBytes > maxSizeInBytes) {
+      res.status(400).json({ message: 'Image size exceeds 2MB limit' })
     }
 
     const uploadResponse = await cloudinary.uploader.upload(profilePic)

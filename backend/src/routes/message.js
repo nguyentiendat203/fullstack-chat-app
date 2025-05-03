@@ -1,15 +1,13 @@
 import express from 'express'
+import { getMessages, getUsersForSidebar, sendMessage } from '../controllers/messageController.js'
+import { protectRoute } from '../middleware/protectRoute.js'
 const router = express.Router()
 
 // Mock message route
-router.get('/', (req, res) => {
-  res.status(200).json({ messages: ['Hello', 'Hi', 'How are you?'] })
-})
+router.get('/users', protectRoute, getUsersForSidebar)
 
-router.post('/', (req, res) => {
-  const { message } = req.body
-  // Mock message saving logic
-  res.status(201).json({ message: 'Message sent successfully', data: message })
-})
+router.get('/:id', protectRoute, getMessages)
+
+router.post('/send/:id', protectRoute, sendMessage)
 
 export default router
