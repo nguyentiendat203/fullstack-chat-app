@@ -87,12 +87,21 @@ const useAuthStore = create((set, get) => ({
 
     if (!authUser || get().socket?.connected) return
 
-    const socket = io(BASE_URL)
+    // Tạo socket kết nối đến server, mỗi người dùng khi đăng nhập sẽ có một socket riêng,
+    // socketId sẽ được lưu trong userSocketMap trên server
+    const socket = io(BASE_URL, {
+      query: {
+        userId: authUser._id
+      }
+    })
 
     socket.connect()
     set({ socket })
 
-    console.log('Socket:', socket)
+    // Nhận danh sách người dùng online từ server
+    socket.on('getOnlineUsers', (userIds) => {
+      set({ onlineUsers: userIds })
+    })
   },
 
   disconnectSocket: () => {
