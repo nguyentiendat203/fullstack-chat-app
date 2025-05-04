@@ -7,12 +7,16 @@ import useAuthStore from '../store/useAuthStore'
 import formatMessageTime from '../lib/formatMessageTime.js'
 
 export const ChatContainer = () => {
-  const { isMessagesLoading, selectedUser, getMessages, messages } = useChatStore()
+  const { isMessagesLoading, selectedUser, getMessages, messages, subscribeToMessages, unsubscribeFromMessages } = useChatStore()
   const { authUser } = useAuthStore()
 
   useEffect(() => {
     getMessages(selectedUser._id)
-  }, [selectedUser._id, getMessages])
+    subscribeToMessages()
+    return () => {
+      unsubscribeFromMessages()
+    }
+  }, [selectedUser._id, getMessages, subscribeToMessages, unsubscribeFromMessages])
 
   return (
     <div className='flex-1 flex flex-col overflow-auto'>

@@ -12,6 +12,10 @@ const io = new Server(server, {
 
 const userSocketMap = {} // {userId: socketId}
 
+export const getSocketId = (userId) => {
+  return userSocketMap[userId]
+}
+
 io.on('connection', (socket) => {
   const userId = socket.handshake.query.userId
   userId ? (userSocketMap[userId] = socket.id) : null

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import axiosInstance from '../lib/axios'
+import useAuthStore from './useAuthStore'
 
 const useChatStore = create((set, get) => ({
   isUsersLoading: false,
@@ -41,6 +42,24 @@ const useChatStore = create((set, get) => ({
       set({ messages: [...messages, res] })
     } catch (error) {
       toast.error(error.response.data.message)
+    }
+  },
+  subscribeToMessages: () => {
+    const socket = useAuthStore.getState().socket
+
+    if (socket) {
+      socket.on('newMessage', (message) => {
+        const { selectedUser, messages } = get()
+        if (message.senderId === selectedUser._id) {
+          set({ messages: [...messages, message] })
+        }
+      })
+    }
+  },
+  unsubscribeFromMessages: () => {
+    const socket = useAuthStore.getState().socket
+    if (socket) {
+      socket.off('newMessage')
     }
   }
 }))
