@@ -1,14 +1,10 @@
 import express from 'express'
-import http from 'http'
 import connectDB from './config/db.js'
-import setupSocket from './config/socket.js'
 import userRouters from './routes/user.js'
 import messageRouters from './routes/message.js'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
-
-const app = express()
-const server = http.createServer(app)
+import { app, io, server } from './config/socket.js'
 
 // Middleware
 app.use(express.json())
@@ -20,9 +16,6 @@ app.use(
   })
 )
 connectDB()
-
-// Setup Socket.IO
-setupSocket(server)
 
 // Setup routes
 app.use('/messages', messageRouters)
