@@ -135,23 +135,29 @@ export const updateProfile = async (req, res) => {
 }
 
 export const refreshToken = (req, res) => {
-  const refreshToken = req.cookies.refresh
-  console.log('refreshToken', refreshToken)
-
-  if (!refreshToken) {
-    return res.status(401).json({ message: 'No refresh token' })
-  }
-
   try {
-    const payload = jwt.verify(refreshToken, process.env.JWT_SECRET)
+    // 1. Lấy refreshToken từ cookies
+    const refreshToken = req.cookies?.refreshToken
+    if (!refreshToken) {
+      return res.status(404).json({ message: 'No refresh token' })
+    }
 
-    // Tạo access token mới
-    const accessToken = jwt.sign({ userId: payload.userId }, process.env.JWT_SECRET, {
-      expiresIn: '2m'
+    // 2. Verify Refresh Token từ cookies
+    const refreshTokenDecoded = JwtProvider.verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET_KEY)
+    const userInfo = { userId: refreshTokenDecoded.userId, email: refreshTokenDecoded.email }
+
+    // 3. Tạo access token mới
+    const accessToken = JwtProvider.generateToken(userInfo, process.env.ACCESS_TOKEN_SECRET_KEY, '1h')
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
     })
 
-    return res.json({ access: accessToken })
+    return res.status(200).json({ accessToken })
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid refresh token' })
+    return res.status(500).json({ message: 'Refresh Token API failed' })
   }
 }

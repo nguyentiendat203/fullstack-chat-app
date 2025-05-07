@@ -59,6 +59,14 @@ const useAuthStore = create((set, get) => ({
     }
   },
 
+  logout: async () => {
+    await axiosInstance.post('/user/logout')
+    localStorage.removeItem('authUser')
+    set({ authUser: null })
+    get().disconnectSocket()
+    toast.success('Logged out successfully')
+  },
+
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true })
     try {

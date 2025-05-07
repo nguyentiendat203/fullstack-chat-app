@@ -1,17 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/useAuthStore'
 import { LogOut, MessageSquare, Settings, User } from 'lucide-react'
-import axiosInstance from '../lib/axios'
 
 const Navbar = () => {
   const navigate = useNavigate()
-  const { authUser, setAuthUser, disconnectSocket } = useAuthStore()
+  const { authUser, logout } = useAuthStore()
 
-  const logout = async () => {
-    await axiosInstance.post('/user/logout')
-    localStorage.removeItem('authUser')
-    setAuthUser(null)
-    disconnectSocket()
+  const handleLogout = async () => {
+    logout()
     navigate('/login')
   }
 
@@ -50,7 +46,7 @@ const Navbar = () => {
                   <span className='hidden sm:inline'>Profile</span>
                 </Link>
 
-                <button className='flex gap-2 items-center' onClick={logout}>
+                <button className='flex gap-2 items-center' onClick={handleLogout}>
                   <LogOut className='size-5' />
                   <span className='hidden sm:inline'>Logout</span>
                 </button>
