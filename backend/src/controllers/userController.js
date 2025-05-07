@@ -1,7 +1,11 @@
 import User from '../models/User.js'
 import bcrypt from 'bcryptjs'
-import generateToken from '../utils/generateToken.js'
+import jwt from 'jsonwebtoken'
 import cloudinary from '../config/cloudinary.js'
+import { JwtProvider } from '../providers/JwtProvider.js'
+import { config } from 'dotenv'
+import ms from 'ms'
+config()
 
 export const registerUser = async (req, res) => {
   const { fullName, email, password } = req.body
@@ -49,15 +53,33 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email })
 
     if (!user) {
-      return res.status(400).json({ message: 'Email do not exist' })
+      return res.status(404).json({ message: 'Email do not exist' })
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password)
     if (!isPasswordCorrect) {
-      return res.status(400).json({ message: 'Password incorrect' })
+      return res.status(401).json({ message: 'Password incorrect' })
     }
 
-    generateToken(user, res)
+    const userInfo = { userId: user._id, email: user.email }
+
+    const accessToken = JwtProvider.generateToken(userInfo, process.env.ACCESS_TOKEN_SECRET_KEY, '1h')
+    const refreshToken = JwtProvider.generateToken(userInfo, process.env.REFRESH_TOKEN_SECRET_KEY, '14 days')
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    })
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    })
+
+    return res.status(200).json({ ...userInfo, accessToken, refreshToken })
   } catch (error) {
     console.log('Error in login controller', error.message)
     res.status(500).json({ message: 'Internal Server Error' })
@@ -66,10 +88,10 @@ export const loginUser = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    res.cookie('jwt', '', { maxAge: 0 })
-    res.status(200).json({ message: 'Logged out successfully' })
+    res.clearCookie('accessToken')
+    res.clearCookie('refreshToken')
+    return res.status(200).json({ message: 'Logged out successfully' })
   } catch (error) {
-    console.log('Error in logout controller', error.message)
     res.status(500).json({ message: 'Internal Server Error' })
   }
 }
@@ -109,5 +131,27 @@ export const updateProfile = async (req, res) => {
   } catch (error) {
     console.log('error in update profile:', error)
     res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+export const refreshToken = (req, res) => {
+  const refreshToken = req.cookies.refresh
+  console.log('refreshToken', refreshToken)
+
+  if (!refreshToken) {
+    return res.status(401).json({ message: 'No refresh token' })
+  }
+
+  try {
+    const payload = jwt.verify(refreshToken, process.env.JWT_SECRET)
+
+    // Tạo access token mới
+    const accessToken = jwt.sign({ userId: payload.userId }, process.env.JWT_SECRET, {
+      expiresIn: '2m'
+    })
+
+    return res.json({ access: accessToken })
+  } catch (error) {
+    return res.status(403).json({ message: 'Invalid refresh token' })
   }
 }

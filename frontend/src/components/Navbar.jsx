@@ -1,9 +1,19 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/useAuthStore'
 import { LogOut, MessageSquare, Settings, User } from 'lucide-react'
+import axiosInstance from '../lib/axios'
 
 const Navbar = () => {
-  const { logout, authUser } = useAuthStore()
+  const navigate = useNavigate()
+  const { authUser, setAuthUser, disconnectSocket } = useAuthStore()
+
+  const logout = async () => {
+    await axiosInstance.post('/user/logout')
+    localStorage.removeItem('authUser')
+    setAuthUser(null)
+    disconnectSocket()
+    navigate('/login')
+  }
 
   return (
     <header

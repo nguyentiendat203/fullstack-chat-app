@@ -1,31 +1,38 @@
 import User from '../models/User.js'
-import jwt from 'jsonwebtoken'
+import { JwtProvider } from '../providers/JwtProvider.js'
+import { config } from 'dotenv'
+config()
 
 export const protectRoute = async (req, res, next) => {
   try {
-    const token = req.cookies.jwt
+    // Lấy accessToken được đính kèm từ req cookie của axios từ FE
+    const accessToken = req.cookies?.accessToken
 
-    if (!token) {
+    //1. Check if the token is provided
+    if (!accessToken) {
       return res.status(401).json({ message: 'Unauthorized - No Token Provided' })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-
-    if (!decoded) {
-      return res.status(401).json({ message: 'Unauthorized - Invalid Token' })
+    const accessTokenDecoded = JwtProvider.verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET_KEY)
+    if (!accessTokenDecoded) {
+      return res.status(401).json({ message: 'Unauthorized - No Token Provided' })
     }
 
-    const user = await User.findById(decoded.userId).select('-password')
+    //2. Check if the user exists
+    const user = await User.findById(accessTokenDecoded.userId).select('-password')
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' })
+      return res.status(401).json({ message: 'User not found!' })
     }
 
     req.user = user
 
     next()
   } catch (error) {
-    console.log('Error in protectRoute middleware: ', error.message)
-    res.status(500).json({ message: 'Internal server error' })
+    // Check nếu accessToken hết hạn trả về lỗi 410 GONE
+    if (error.message.includes('jwt expired')) {
+      return res.status(410).json({ message: 'Access Token has expired!' })
+    }
+    res.status(401).json({ message: 'Unauthorized - Invalid Token' })
   }
 }

@@ -15,13 +15,15 @@ const useAuthStore = create((set, get) => ({
   selectedUser: null,
   setSelectedUser: (user) => set({ selectedUser: user }),
 
-  checkAuth: async () => {
-    try {
-      const response = await axiosInstance.get('/user/check')
-      set({ authUser: response })
+  setAuthUser: (newAuthUser) => set({ authUser: newAuthUser }),
+
+  checkAuth: () => {
+    const authUser = localStorage.getItem('authUser')
+    if (authUser) {
+      set({ authUser: JSON.parse(authUser) })
       get().connectSocket()
-    } catch (error) {
-      console.error('Error in checkAuth:', error)
+    } else {
+      set({ authUser: null })
     }
   },
 
@@ -43,27 +45,17 @@ const useAuthStore = create((set, get) => ({
   },
 
   login: async (user) => {
-    set({ isLoggingIn: true })
     try {
+      set({ isLoggingIn: true })
       const response = await axiosInstance.post('/user/login', user)
       set({ authUser: response })
+      const { accessToken, refreshToken, ...rest } = response
+      localStorage.setItem('authUser', JSON.stringify(rest))
       get().connectSocket()
-      toast.success('Logged in successfully')
     } catch (error) {
-      console.error('Error in login:', error)
+      console.log(error)
     } finally {
       set({ isLoggingIn: false })
-    }
-  },
-
-  logout: async () => {
-    try {
-      await axiosInstance.post('/user/logout')
-      set({ authUser: null })
-      get().disconnectSocket()
-      toast.success('Logged out successfully')
-    } catch (error) {
-      console.error('Error in logout:', error)
     }
   },
 
@@ -83,7 +75,6 @@ const useAuthStore = create((set, get) => ({
 
   connectSocket: () => {
     const { authUser } = get()
-    console.log(get().socket)
 
     if (!authUser || get().socket?.connected) return
 
