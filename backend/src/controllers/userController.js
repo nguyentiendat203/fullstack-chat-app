@@ -61,7 +61,12 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Password incorrect' })
     }
 
-    const userInfo = { userId: user._id, email: user.email }
+    const userInfo = {
+      userId: user._id,
+      email: user.email,
+      fullName: user.fullName,
+      profilePic: user.profilePic
+    }
 
     const accessToken = JwtProvider.generateToken(userInfo, process.env.ACCESS_TOKEN_SECRET_KEY, '1h')
     const refreshToken = JwtProvider.generateToken(userInfo, process.env.REFRESH_TOKEN_SECRET_KEY, '14 days')
