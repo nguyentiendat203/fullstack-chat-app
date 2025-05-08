@@ -1,11 +1,11 @@
 # 📚 Full-Stack Realtime Chat App
 
 Highlights:
-🌟 Tech stack: MERN + Socket.io + TailwindCSS + Daisy UI
-🎃 Authentication && Authorization with JWT
-👾 Real-time messaging with Socket.io
-🚀 Online user status
-👌 Global state management with Zustand
+-  🌟 Tech stack: MERN + Socket.io + TailwindCSS + Daisy UI
+-  🎃 Authentication && Authorization with JWT
+-  👾 Real-time messaging with Socket.io
+-  🚀 Online user status
+-  👌 Global state management with Zustand
 
 ## Installation
 
@@ -13,7 +13,8 @@ Highlights:
 
 ```bash
 MONGODB_URI=...
-JWT_SECRET=...
+ACCESS_TOKEN_SECRET_KEY=...
+REFRESH_TOKEN_SECRET_KEY=...
 BUILD_MODE=...
 
 CLOUDINARY_CLOUD_NAME=...
