@@ -25,6 +25,13 @@ axiosInstance.interceptors.request.use(
     return Promise.reject(error)
   }
 )
+
+const refreshTokenAPI = async () => {
+  return await axiosInstance.post('/user/api/refresh')
+}
+
+let refreshTokenPromise = null
+
 // Add a response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
@@ -42,23 +49,29 @@ axiosInstance.interceptors.response.use(
     // 2. Check nếu ở BE trả về 410 Gone, nghĩa là access token hết hạn thì gọi API refresh để làm mới accessToken
     // Đầu tiên lấy đươc request của API đang bị lỗi bằng error.config
     const originalRequest = error.config
-    if (error.status === 410 && !originalRequest._retry) {
-      // set _retry = true để API refreshToken chỉ gọi 1 lần tại 1 thời điểm
-      originalRequest._retry = true
+    if (error.status === 410 && originalRequest) {
+      if (!refreshTokenPromise) {
+        refreshTokenPromise = refreshTokenAPI()
+          .then(() => {
+            // Ngay sau khi gọi API refresh thành công thì lập tức nhảy xuống bước return refreshTokenPromise
+          })
+          .catch((err) => {
+            // Nếu như refreshToken hết hạn hoặc bị lỗi thì logout luôn
+            useAuthStore.getState().logout()
+            location.href('/login')
+            return Promise.reject(err)
+          })
+          .finally(() => {
+            refreshTokenPromise = null
+          })
+      }
 
-      return axiosInstance
-        .post('/user/api/refresh')
-        .then((res) => {
-          // Sau khi gọi refresh api thì accessToken cug dc update lại ở req.cookies
-          // Return lại axiosInstance và kết hợp với originalRequest để gọi lại API ban đầu bị lỗi access token expired
-          return axiosInstance(originalRequest)
-        })
-        .catch((err) => {
-          // Nếu như refreshToken hết hạn hoặc bị lỗi thì logout luôn
-          useAuthStore.getState().logout()
-          location.href('/login')
-          return Promise.reject(err)
-        })
+      // Cuối cùng là return lại refreshTokenPromise trong trường hợp success
+      return refreshTokenPromise.then(() => {
+        // Sau khi gọi refresh api thì accessToken cug dc update lại ở req.cookies
+        // Return lại axiosInstance và kết hợp với originalRequest để gọi lại API ban đầu bị lỗi access token expired
+        return axiosInstance(originalRequest)
+      })
     }
 
     if (error.response.data?.status !== 410) {
